@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Steam Auth Web Util</title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <!-- GitHub Ribbon -->
+    <a href="https://github.com/scholtzm/steam-auth-web-util">
+      <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png">
+    </a>
+
+    <div class="container">
+      <h1>Steam Auth Web Util</h1>
+      <h4>Tiny browser utility to generate Steam auth codes</h4>
+
+      <div class="inputs">
+        <div class="form-group">
+          <label for="share-secret">Shared secret:</label>
+          <input name="shared-secret" type="text" placeholder="Shared secret">
+        </div>
+        <div class="form-group">
+          <label for="identity-secret">Identity secret:</label>
+          <input name="identity-secret" type="text" placeholder="Identity secret">
+        </div>
+        <div class="form-group">
+          <label for="time-offset">Time offset (in ms):</label>
+          <input name="time-offset" type="number" value="0">
+        </div>
+        <div class="form-group">
+          <input type="button" name="save" value="Save to local storage">
+          <input type="button" name="clear" value="Clear local storage">
+        </div>
+      </div>
+
+      <div class="output">
+        <h4>SteamGuard</h4>
+        <span id="auth-code" class="code">---</span><br>
+        (Expires in <span id="auth-code-countdown"></span> seconds)
+
+        <h4>Confirmation keys</h4>
+        Conf key: <span id="conf-key" class="code">---</span><br>
+        Details key: <span id="details-key" class="code">---</span><br>
+        Allow key: <span id="allow-key" class="code">---</span><br>
+        Cancel key: <span id="cancel-key" class="code">---</span><br>
+      </div>
+    </div>
+    <script src="bundle.js"></script>
+  </body>
+</html>
