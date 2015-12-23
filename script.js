@@ -1,6 +1,16 @@
 var $ = require('jquery');
 var totp = require('steam-totp');
 
+function flashMessage(message, timeout) {
+  timeout = timeout || 2000;
+  var messageBox = $('.message');
+
+  messageBox.text(message);
+  setTimeout(function() {
+    messageBox.text('');
+  }, timeout);
+}
+
 $(function() {
   var keys = localStorage.getItem('keys');
 
@@ -21,10 +31,12 @@ $('input[name="save"]').click(function() {
   };
 
   localStorage.setItem('keys', JSON.stringify(values));
+  flashMessage('Saved.');
 });
 
 $('input[name="clear"]').click(function() {
-  localStorage.clear();
+  localStorage.removeItem('keys');
+  flashMessage('Cleared.');
 });
 
 setInterval(function() {

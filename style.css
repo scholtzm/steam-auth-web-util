@@ -43,11 +43,11 @@ input[type="button"] {
   border-radius: 3px;
   border: 1px solid #171A21;
   background-color: #fff;
-  color: #555;
+  color: #000;
   padding: 5px;
 }
 
-.inputs {
+.input {
   text-align: center;
 }
 
