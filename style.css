@@ -47,18 +47,26 @@ input[type="button"] {
   padding: 5px;
 }
 
-.input {
+input[name="fixed-timestamp"] {
+  width: 150px;
+}
+
+.input, .output, .info {
   text-align: center;
+}
+
+.message {
+  margin-bottom: 10px;
+  color: lightblue;
+  display: none;
 }
 
 .form-group {
   margin-bottom: 10px;
 }
 
-.output {
-  text-align: center;
-}
-
 .code {
-  font-family: "Lucida Console", Monaco, monospace
+  font-size: 18px;
+  font-family: monospace;
+  color: lightgreen;
 }

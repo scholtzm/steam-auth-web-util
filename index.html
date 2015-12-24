@@ -17,13 +17,20 @@
       <h4>Tiny browser utility to generate Steam auth codes</h4>
 
       <div class="input">
+        <div class="message"></div>
         <div class="form-group">
           <label for="share-secret">Shared secret:</label>
-          <input name="shared-secret" type="text" placeholder="Shared secret">
+          <input name="shared-secret" type="text">
         </div>
         <div class="form-group">
           <label for="identity-secret">Identity secret:</label>
-          <input name="identity-secret" type="text" placeholder="Identity secret">
+          <input name="identity-secret" type="text">
+        </div>
+        <div class="form-group">
+          <label for="fixed-timestamp" title="Leave empty for live timestamp. Used only for confirmations.">Static timestamp:</label>
+          <input name="fixed-timestamp" type="text">
+          <button id="set-current-timestamp">Set current</button>
+          <button id="set-dynamic-timestamp">Set dynamic</button>
         </div>
         <div class="form-group">
           <label for="time-offset">Time offset (seconds):</label>
@@ -32,7 +39,6 @@
         <div class="form-group">
           <input type="button" name="save" value="Save to local storage">
           <input type="button" name="clear" value="Clear local storage"><br>
-          <span class="message"></span>
         </div>
       </div>
 

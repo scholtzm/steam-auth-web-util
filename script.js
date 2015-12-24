@@ -7,22 +7,23 @@ var LOCALSTORAGE_KEY = 'sawu-keys';
 var TAGS = ['conf', 'details', 'allow', 'cancel'];
 
 function flashMessage(message, timeout) {
-  timeout = timeout || 2000;
+  timeout = timeout || 3000;
   var messageBox = $('.message');
 
-  messageBox.text(message);
+  messageBox.text(message).slideDown(400);
   setTimeout(function() {
-    messageBox.text('');
+    messageBox.slideUp(400);
   }, timeout);
 }
 
 function generate() {
   var sharedSecret = $('input[name="shared-secret"]').val();
   var identitySecret = $('input[name="identity-secret"]').val();
+  var fixedTimestamp = $('input[name="fixed-timestamp"]').val();
   var timeOffset = $('input[name="time-offset"]').val();
 
   var offset = parseInt(timeOffset, 10);
-  if(offset === NaN) {
+  if(isNaN(offset)) {
     offset = 0;
   }
 
@@ -38,7 +39,13 @@ function generate() {
   }
 
   if(identitySecret && identitySecret !== '') {
+    var timestamp = parseInt(fixedTimestamp, 10);
     var time = totp.time(offset);
+
+    if(!isNaN(timestamp)) {
+      time = timestamp + offset;
+    }
+
     var keys = [];
 
     TAGS.forEach(function(tag) {
@@ -64,6 +71,7 @@ $(function() {
 
       $('input[name="shared-secret"]').val(values.sharedSecret),
       $('input[name="identity-secret"]').val(values.identitySecret),
+      $('input[name="fixed-timestamp"]').val(values.fixedTimestamp),
       $('input[name="time-offset"]').val(values.offset);
     } catch(error) {
       // this should hopefully not happen
@@ -79,6 +87,7 @@ $('input[name="save"]').click(function() {
   var values = {
     sharedSecret: $('input[name="shared-secret"]').val(),
     identitySecret: $('input[name="identity-secret"]').val(),
+    fixedTimestamp: $('input[name="fixed-timestamp"]').val(),
     offset: $('input[name="time-offset"]').val()
   };
 
@@ -89,4 +98,14 @@ $('input[name="save"]').click(function() {
 $('input[name="clear"]').click(function() {
   localStorage.removeItem(LOCALSTORAGE_KEY);
   flashMessage('Cleared.');
+});
+
+$('#set-current-timestamp').click(function() {
+  $('input[name="fixed-timestamp"]').val(Math.floor(Date.now() / 1000));
+  flashMessage('Set to current unix timestamp.');
+});
+
+$('#set-dynamic-timestamp').click(function() {
+  $('input[name="fixed-timestamp"]').val('');
+  flashMessage('Set to dynamic.');
 });
