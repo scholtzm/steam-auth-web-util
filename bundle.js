@@ -32457,6 +32457,11 @@ function bufferizeSecret(secret) {
 var $ = require('jquery');
 var totp = require('steam-totp');
 
+var GENERATION_DELAY = 1000;
+var DUMMY_TEXT = '???';
+var LOCALSTORAGE_KEY = 'sawu-keys';
+var TAGS = ['conf', 'details', 'allow', 'cancel'];
+
 function flashMessage(message, timeout) {
   timeout = timeout || 2000;
   var messageBox = $('.message');
@@ -32467,35 +32472,7 @@ function flashMessage(message, timeout) {
   }, timeout);
 }
 
-$(function() {
-  var keys = localStorage.getItem('keys');
-
-  if(keys) {
-    var values = JSON.parse(keys);
-
-    $('input[name="shared-secret"]').val(values.sharedSecret),
-    $('input[name="identity-secret"]').val(values.identitySecret),
-    $('input[name="time-offset"]').val(values.offset);
-  }
-});
-
-$('input[name="save"]').click(function() {
-  var values = {
-    sharedSecret: $('input[name="shared-secret"]').val(),
-    identitySecret: $('input[name="identity-secret"]').val(),
-    offset: $('input[name="time-offset"]').val()
-  };
-
-  localStorage.setItem('keys', JSON.stringify(values));
-  flashMessage('Saved.');
-});
-
-$('input[name="clear"]').click(function() {
-  localStorage.removeItem('keys');
-  flashMessage('Cleared.');
-});
-
-setInterval(function() {
+function generate() {
   var sharedSecret = $('input[name="shared-secret"]').val();
   var identitySecret = $('input[name="identity-secret"]').val();
   var timeOffset = $('input[name="time-offset"]').val();
@@ -32512,28 +32489,62 @@ setInterval(function() {
     $('#auth-code').text(authCode);
     $('#auth-code-countdown').text(countDown);
   } else {
-    $('#auth-code').text('???');
-    $('#auth-code-countdown').text('???');
+    $('#auth-code').text(DUMMY_TEXT);
+    $('#auth-code-countdown').text(DUMMY_TEXT);
   }
 
   if(identitySecret && identitySecret !== '') {
     var time = totp.time(offset);
+    var keys = [];
 
-    var confKey = totp.getConfirmationKey(identitySecret, time, 'conf');
-    var detailsKey = totp.getConfirmationKey(identitySecret, time, 'details');
-    var allowKey = totp.getConfirmationKey(identitySecret, time, 'allow');
-    var cancelKey = totp.getConfirmationKey(identitySecret, time, 'cancel');
+    TAGS.forEach(function(tag) {
+      keys.push(totp.getConfirmationKey(identitySecret, time, tag));
+    });
 
-    $('#conf-key').text(confKey);
-    $('#details-key').text(detailsKey);
-    $('#allow-key').text(allowKey);
-    $('#cancel-key').text(cancelKey);
+    for(var i = 0; i < TAGS.length; i++) {
+      $('#' + TAGS[i] + '-key').text(keys[i]);
+    }
   } else {
-    $('#conf-key').text('???');
-    $('#details-key').text('???');
-    $('#allow-key').text('???');
-    $('#cancel-key').text('???');
+    TAGS.forEach(function(tag) {
+      $('#' + tag + '-key').text(DUMMY_TEXT);
+    });
   }
-}, 1000);
+}
+
+$(function() {
+  var keys = localStorage.getItem(LOCALSTORAGE_KEY);
+
+  if(keys) {
+    try {
+      var values = JSON.parse(keys);
+
+      $('input[name="shared-secret"]').val(values.sharedSecret),
+      $('input[name="identity-secret"]').val(values.identitySecret),
+      $('input[name="time-offset"]').val(values.offset);
+    } catch(error) {
+      // this should hopefully not happen
+      console.log(error);
+    }
+  }
+
+  generate();
+  setInterval(generate, GENERATION_DELAY);
+});
+
+$('input[name="save"]').click(function() {
+  var values = {
+    sharedSecret: $('input[name="shared-secret"]').val(),
+    identitySecret: $('input[name="identity-secret"]').val(),
+    offset: $('input[name="time-offset"]').val()
+  };
+
+  localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(values));
+  flashMessage('Saved.');
+});
+
+$('input[name="clear"]').click(function() {
+  localStorage.removeItem(LOCALSTORAGE_KEY);
+  flashMessage('Cleared.');
+});
 
 },{"jquery":233,"steam-totp":234}]},{},[235]);
