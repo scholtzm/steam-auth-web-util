@@ -47,6 +47,15 @@ input[type="button"] {
   padding: 5px;
 }
 
+button {
+  font-size: 10px;
+  border-radius: 3px;
+  border: 1px solid #171A21;
+  background-color: #fff;
+  color: #000;
+  padding: 3px;
+}
+
 input[name="fixed-timestamp"] {
   width: 150px;
 }
