@@ -16,6 +16,12 @@ function flashMessage(message, timeout) {
   }, timeout);
 }
 
+function replaceOnlyIfDifferent(target, text) {
+  if(target.text() !== text) {
+    target.text(text);
+  }
+}
+
 function generate() {
   var sharedSecret = $('input[name="shared-secret"]').val();
   var identitySecret = $('input[name="identity-secret"]').val();
@@ -31,11 +37,11 @@ function generate() {
     var countDown = 30 - (totp.time() % 30);
     var authCode = totp.generateAuthCode(sharedSecret, offset);
 
-    $('#auth-code').text(authCode);
-    $('#auth-code-countdown').text(countDown);
+    replaceOnlyIfDifferent($('#auth-code'), authCode);
+    replaceOnlyIfDifferent($('#auth-code-countdown'), countDown);
   } else {
-    $('#auth-code').text(DUMMY_TEXT);
-    $('#auth-code-countdown').text(DUMMY_TEXT);
+    replaceOnlyIfDifferent($('#auth-code'), DUMMY_TEXT);
+    replaceOnlyIfDifferent($('#auth-code-countdown'), DUMMY_TEXT);
   }
 
   if(identitySecret && identitySecret !== '') {
@@ -53,11 +59,11 @@ function generate() {
     });
 
     for(var i = 0; i < TAGS.length; i++) {
-      $('#' + TAGS[i] + '-key').text(keys[i]);
+      replaceOnlyIfDifferent($('#' + TAGS[i] + '-key'), keys[i]);
     }
   } else {
     TAGS.forEach(function(tag) {
-      $('#' + tag + '-key').text(DUMMY_TEXT);
+      replaceOnlyIfDifferent($('#' + tag + '-key'), DUMMY_TEXT);
     });
   }
 }
