@@ -79,3 +79,10 @@ input[name="fixed-timestamp"] {
   font-family: monospace;
   color: lightgreen;
 }
+
+.footer {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 12px;
+  color: #ccc;
+}
