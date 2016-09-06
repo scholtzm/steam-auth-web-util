@@ -1,6 +1,6 @@
-import React from 'react'
-import { render } from 'react-dom'
-import { Router, Route, browserHistory } from 'react-router'
+import React from 'react';
+import { render } from 'react-dom';
+import { Router, Route, browserHistory } from 'react-router';
 import totp from 'steam-totp';
 
 import packageJson from '../package.json';
@@ -65,7 +65,7 @@ const App = React.createClass({
   },
 
   _onCurrentTimestampClick() {
-    this.setState({timestamp: Math.floor(Date.now() / 1000)})
+    this.setState({timestamp: Math.floor(Date.now() / 1000)});
   },
 
   _onDynamicTimestampClick() {
@@ -119,7 +119,7 @@ const App = React.createClass({
   componentDidMount() {
     setInterval(() => {
       this._recalculate();
-    }, 1000)
+    }, 1000);
   },
 
   render() {
@@ -195,10 +195,10 @@ const App = React.createClass({
       </div>
     );
   }
-})
+});
 
 render((
   <Router history={browserHistory}>
     <Route path="/" component={App} />
   </Router>
-), document.getElementById('root'))
+), document.getElementById('root'));

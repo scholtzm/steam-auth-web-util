@@ -15,8 +15,8 @@
     "build": "browserify -t [ babelify --presets [ react es2015 ] ] -g uglifyify src/app.jsx -o dist/app.js",
     "watch": "watchify -t [ babelify --presets [ react es2015 ] ] src/app.jsx -o dist/app.js -v",
     "start": "live-server",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix"
+    "lint": "eslint ./src --ext .js,.jsx",
+    "lint:fix": "eslint ./src --ext .js,.jsx --fix"
   },
   "dependencies": {
     "react": "^15.3.1",
