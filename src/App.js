@@ -1,16 +1,15 @@
 import React from 'react';
-import { render } from 'react-dom';
-import { Router, Route, browserHistory } from 'react-router';
+import createReactClass from 'create-react-class';
 import totp from 'steam-totp';
 
 import packageJson from '../package.json';
 
 const LOCALSTORAGE_KEY = 'sawu-keys';
 
-const App = React.createClass({
+export default createReactClass({
   _generate(sharedSecret, identitySecret, timestamp, timeOffset) {
     let offset = parseInt(timeOffset, 10);
-    if(isNaN(offset)) {
+    if (isNaN(offset)) {
       offset = 0;
     }
 
@@ -23,7 +22,7 @@ const App = React.createClass({
       cancelKey: '???'
     };
 
-    if(sharedSecret && sharedSecret !== '') {
+    if (sharedSecret && sharedSecret !== '') {
       let countDown = 30 - (totp.time() % 30);
       let authCode = totp.generateAuthCode(sharedSecret, offset);
 
@@ -31,15 +30,15 @@ const App = React.createClass({
       result.countDown = countDown;
     }
 
-    if(identitySecret && identitySecret !== '') {
+    if (identitySecret && identitySecret !== '') {
       timestamp = parseInt(timestamp, 10);
       let time = totp.time(offset);
 
-      if(!isNaN(timestamp)) {
+      if (!isNaN(timestamp)) {
         time = timestamp + offset;
       }
 
-      ['conf', 'details', 'allow', 'cancel'].forEach(function(tag) {
+      ['conf', 'details', 'allow', 'cancel'].forEach(function (tag) {
         result[tag + 'Key'] = totp.getConfirmationKey(identitySecret, time, tag);
       });
     }
@@ -53,23 +52,23 @@ const App = React.createClass({
   },
 
   _handleSharedSecretChange(event) {
-    this.setState({sharedSecret: event.target.value});
+    this.setState({ sharedSecret: event.target.value });
   },
 
   _handleIdentitySecretChange(event) {
-    this.setState({identitySecret: event.target.value});
+    this.setState({ identitySecret: event.target.value });
   },
 
   _handleTimeOffsetChange(event) {
-    this.setState({timeOffset: event.target.value});
+    this.setState({ timeOffset: event.target.value });
   },
 
   _onCurrentTimestampClick() {
-    this.setState({timestamp: Math.floor(Date.now() / 1000)});
+    this.setState({ timestamp: Math.floor(Date.now() / 1000) });
   },
 
   _onDynamicTimestampClick() {
-    this.setState({timestamp: ''});
+    this.setState({ timestamp: '' });
   },
 
   _onSaveClick() {
@@ -87,7 +86,7 @@ const App = React.createClass({
     localStorage.removeItem(LOCALSTORAGE_KEY);
   },
 
-  getInitialState: function() {
+  getInitialState() {
     return {
       sharedSecret: '',
       identitySecret: '',
@@ -106,11 +105,11 @@ const App = React.createClass({
   componentWillMount() {
     let savedStateString = localStorage.getItem(LOCALSTORAGE_KEY);
 
-    if(savedStateString) {
+    if (savedStateString) {
       try {
         let savedState = JSON.parse(savedStateString);
         this.setState(savedState);
-      } catch(error) {
+      } catch (error) {
         // this should hopefully not happen
       }
     }
@@ -142,7 +141,7 @@ const App = React.createClass({
             <input name="identity-secret"
               type="text"
               value={this.state.identitySecret}
-              onChange={this._handleIdentitySecretChange}/>
+              onChange={this._handleIdentitySecretChange} />
           </div>
           <div className="form-group">
             <label htmlFor="fixed-timestamp" title="Leave empty for live timestamp. Used only for confirmations.">Static timestamp:</label>
@@ -151,11 +150,11 @@ const App = React.createClass({
               value={this.state.timestamp} />
             <button id="set-current-timestamp"
               onClick={this._onCurrentTimestampClick}>
-                Set current
+              Set current
             </button>
             <button id="set-dynamic-timestamp"
               onClick={this._onDynamicTimestampClick}>
-                Set dynamic
+              Set dynamic
             </button>
           </div>
           <div className="form-group">
@@ -173,7 +172,7 @@ const App = React.createClass({
             <input type="button"
               name="clear"
               value="Clear local storage"
-              onClick={this._onClearClick}/><br />
+              onClick={this._onClearClick} /><br />
           </div>
         </div>
 
@@ -196,9 +195,3 @@ const App = React.createClass({
     );
   }
 });
-
-render((
-  <Router history={browserHistory}>
-    <Route path="/" component={App} />
-  </Router>
-), document.getElementById('root'));
