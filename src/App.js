@@ -1,104 +1,87 @@
 import React from 'react';
 import createReactClass from 'create-react-class';
-import totp from 'steam-totp';
+
+import { generate } from './totp'
 
 import packageJson from '../package.json';
 
 const LOCALSTORAGE_KEY = 'sawu-keys';
 
 export default createReactClass({
-  _generate(sharedSecret, identitySecret, timestamp, timeOffset) {
-    let offset = parseInt(timeOffset, 10);
-    if (isNaN(offset)) {
-      offset = 0;
-    }
-
-    let result = {
-      authCode: '???',
-      countDown: '???',
-      confKey: '???',
-      detailsKey: '???',
-      allowKey: '???',
-      cancelKey: '???'
-    };
-
-    if (sharedSecret && sharedSecret !== '') {
-      let countDown = 30 - (totp.time() % 30);
-      let authCode = totp.generateAuthCode(sharedSecret, offset);
-
-      result.authCode = authCode;
-      result.countDown = countDown;
-    }
-
-    if (identitySecret && identitySecret !== '') {
-      timestamp = parseInt(timestamp, 10);
-      let time = totp.time(offset);
-
-      if (!isNaN(timestamp)) {
-        time = timestamp + offset;
-      }
-
-      ['conf', 'details', 'allow', 'cancel'].forEach(function (tag) {
-        result[tag + 'Key'] = totp.getConfirmationKey(identitySecret, time, tag);
-      });
-    }
-
-    return result;
-  },
-
-  _recalculate() {
-    const newStateValues = this._generate(this.state.sharedSecret, this.state.identitySecret, this.state.timestamp, this.state.timeOffset);
-    this.setState(newStateValues);
+  _calculate() {
+    const { sharedSecret, identitySecret, timestamp, timeOffset } = this.state.formData;
+    const generatedValues = generate(sharedSecret, identitySecret, timestamp, timeOffset);
+    this.setState({ generatedValues });
   },
 
   _handleSharedSecretChange(event) {
-    this.setState({ sharedSecret: event.target.value });
+    const formData = Object.assign({}, this.state.formData, { sharedSecret: event.target.value });
+    this.setState({ formData });
   },
 
   _handleIdentitySecretChange(event) {
-    this.setState({ identitySecret: event.target.value });
+    const formData = Object.assign({}, this.state.formData, { identitySecret: event.target.value });
+    this.setState({ formData });
+  },
+
+  _handleTimestampChange(event) {
+    const formData = Object.assign({}, this.state.formData, { timestamp: event.target.value });
+    this.setState({ formData });
   },
 
   _handleTimeOffsetChange(event) {
-    this.setState({ timeOffset: event.target.value });
+    const formData = Object.assign({}, this.state.formData, { timeOffset: event.target.value });
+    this.setState({ formData });
   },
 
   _onCurrentTimestampClick() {
-    this.setState({ timestamp: Math.floor(Date.now() / 1000) });
+    const formData = Object.assign({}, this.state.formData, { timestamp: Math.floor(Date.now() / 1000) });
+    this.setState({ formData });
+    this._flashMessage('Set to current unix timestamp.');
   },
 
   _onDynamicTimestampClick() {
-    this.setState({ timestamp: '' });
+    const formData = Object.assign({}, this.state.formData, { timestamp: '' });
+    this.setState({ formData });
+    this._flashMessage('Set to dynamic.');
   },
 
   _onSaveClick() {
-    const partialState = {
-      sharedSecret: this.state.sharedSecret,
-      identitySecret: this.state.identitySecret,
-      timestamp: this.state.timestamp,
-      timeOffset: this.state.timeOffset
-    };
-
-    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(partialState));
+    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(this.state.formData));
+    this._flashMessage('Saved.');
   },
 
   _onClearClick() {
     localStorage.removeItem(LOCALSTORAGE_KEY);
+    this._flashMessage('Cleared.');
+  },
+
+  _flashMessage(message, timeout = 3000) {
+    this.setState({ message });
+    setTimeout(() => {
+      this.setState({ message: null });
+    }, timeout);
   },
 
   getInitialState() {
     return {
-      sharedSecret: '',
-      identitySecret: '',
-      timestamp: '',
-      timeOffset: 0,
+      message: null,
 
-      authCode: '???',
-      countDown: '???',
-      confKey: '???',
-      detailsKey: '???',
-      allowKey: '???',
-      cancelKey: '???'
+      formData: {
+        sharedSecret: '',
+        identitySecret: '',
+        timestamp: '',
+        timeOffset: 0,
+      },
+
+      generatedValues: {
+        authCode: '???',
+        countDown: '???',
+        confKey: '???',
+        detailsKey: '???',
+        allowKey: '???',
+        cancelKey: '???'
+      }
     };
   },
 
@@ -107,8 +90,8 @@ export default createReactClass({
 
     if (savedStateString) {
       try {
-        let savedState = JSON.parse(savedStateString);
-        this.setState(savedState);
+        let formData = JSON.parse(savedStateString);
+        this.setState({ formData });
       } catch (error) {
         // this should hopefully not happen
       }
@@ -117,43 +100,48 @@ export default createReactClass({
 
   componentDidMount() {
     setInterval(() => {
-      this._recalculate();
+      this._calculate();
     }, 1000);
+    this._calculate();
   },
 
   render() {
+    let message = null;
+    if(this.state.message) {
+      message = <div className="message">{this.state.message}</div>
+    }
+
     return (
       <div className="container">
         <h1>Steam Auth Web Util</h1>
         <h4>Tiny browser utility to generate Steam auth codes</h4>
 
         <div className="input">
-          <div className="message"></div>
+          {message}
           <div className="form-group">
             <label htmlFor="share-secret">Shared secret:</label>
             <input name="shared-secret"
               type="text"
-              value={this.state.sharedSecret}
+              value={this.state.formData.sharedSecret}
               onChange={this._handleSharedSecretChange} />
           </div>
           <div className="form-group">
             <label htmlFor="identity-secret">Identity secret:</label>
             <input name="identity-secret"
               type="text"
-              value={this.state.identitySecret}
+              value={this.state.formData.identitySecret}
               onChange={this._handleIdentitySecretChange} />
           </div>
           <div className="form-group">
             <label htmlFor="fixed-timestamp" title="Leave empty for live timestamp. Used only for confirmations.">Static timestamp:</label>
             <input name="fixed-timestamp"
               type="text"
-              value={this.state.timestamp} />
-            <button id="set-current-timestamp"
-              onClick={this._onCurrentTimestampClick}>
+              value={this.state.formData.timestamp}
+              onChange={this._handleTimestampChange} />
+            <button onClick={this._onCurrentTimestampClick}>
               Set current
             </button>
-            <button id="set-dynamic-timestamp"
-              onClick={this._onDynamicTimestampClick}>
+            <button onClick={this._onDynamicTimestampClick}>
               Set dynamic
             </button>
           </div>
@@ -161,7 +149,7 @@ export default createReactClass({
             <label htmlFor="time-offset">Time offset (seconds):</label>
             <input name="time-offset"
               type="number"
-              value={this.state.timeOffset}
+              value={this.state.formData.timeOffset}
               onChange={this._handleTimeOffsetChange} />
           </div>
           <div className="form-group">
@@ -178,14 +166,14 @@ export default createReactClass({
 
         <div className="output">
           <h4>SteamGuard</h4>
-          <span id="auth-code" className="code">{this.state.authCode}</span><br />
-          (Expires in <span id="auth-code-countdown">{this.state.countDown}</span> seconds)
+          <span className="code">{this.state.generatedValues.authCode}</span><br />
+          (Expires in <span>{this.state.generatedValues.countDown}</span> seconds)
 
           <h4>Confirmation keys</h4>
-          Conf key: <span id="conf-key" className="code">{this.state.confKey}</span><br />
-          Details key: <span id="details-key" className="code">{this.state.detailsKey}</span><br />
-          Allow key: <span id="allow-key" className="code">{this.state.allowKey}</span><br />
-          Cancel key: <span id="cancel-key" className="code">{this.state.cancelKey}</span><br />
+          Conf key: <span className="code">{this.state.generatedValues.confKey}</span><br />
+          Details key: <span className="code">{this.state.generatedValues.detailsKey}</span><br />
+          Allow key: <span className="code">{this.state.generatedValues.allowKey}</span><br />
+          Cancel key: <span className="code">{this.state.generatedValues.cancelKey}</span><br />
         </div>
 
         <div className="footer">

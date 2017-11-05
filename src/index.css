@@ -67,7 +67,6 @@ input[name="fixed-timestamp"] {
 .message {
   margin-bottom: 10px;
   color: lightblue;
-  display: none;
 }
 
 .form-group {
