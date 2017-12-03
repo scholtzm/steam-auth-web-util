@@ -1,11 +1,10 @@
 import React from 'react';
 import createReactClass from 'create-react-class';
 
-import { generate } from './totp'
+import { generate } from './utils/totp';
+import profile from './utils/profile';
 
 import packageJson from '../package.json';
-
-const LOCALSTORAGE_KEY = 'sawu-keys';
 
 export default createReactClass({
   _calculate() {
@@ -47,12 +46,12 @@ export default createReactClass({
   },
 
   _onSaveClick() {
-    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(this.state.formData));
+    profile.save(this.state.formData);
     this._flashMessage('Saved.');
   },
 
   _onClearClick() {
-    localStorage.removeItem(LOCALSTORAGE_KEY);
+    profile.clear();
     this._flashMessage('Cleared.');
   },
 
@@ -86,15 +85,10 @@ export default createReactClass({
   },
 
   componentWillMount() {
-    let savedStateString = localStorage.getItem(LOCALSTORAGE_KEY);
+    const formData = profile.load();
 
-    if (savedStateString) {
-      try {
-        let formData = JSON.parse(savedStateString);
-        this.setState({ formData });
-      } catch (error) {
-        // this should hopefully not happen
-      }
+    if(formData != null) {
+      this.setState({ formData });
     }
   },
 
