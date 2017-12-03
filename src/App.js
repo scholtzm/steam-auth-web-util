@@ -1,5 +1,6 @@
 import React from 'react';
 import createReactClass from 'create-react-class';
+import cloneDeep from 'lodash/cloneDeep';
 
 import { generate } from './utils/totp';
 import profile from './utils/profile';
@@ -8,51 +9,93 @@ import packageJson from '../package.json';
 
 export default createReactClass({
   _calculate() {
-    const { sharedSecret, identitySecret, timestamp, timeOffset } = this.state.formData;
+    const { sharedSecret, identitySecret, timestamp, timeOffset } = this.state.profiles[this.state.activeProfile].formData;
     const generatedValues = generate(sharedSecret, identitySecret, timestamp, timeOffset);
     this.setState({ generatedValues });
   },
 
+  _loadFromStorage() {
+    const profiles = profile.load();
+    if (profiles != null) {
+      console.log(this.state.activeProfile);
+      let newActiveProfile = this.state.activeProfile;
+      if(this.state.activeProfile >= profiles.length) {
+        newActiveProfile = 0;
+      }
+
+      this.setState({ activeProfile: newActiveProfile, profiles });
+    }
+  },
+
+  _updateState(updateValue) {
+    const profilesClone = cloneDeep(this.state.profiles);
+    const formData = Object.assign({}, this.state.profiles[this.state.activeProfile].formData, updateValue);
+    profilesClone[this.state.activeProfile].formData = formData;
+    this.setState({ profiles: profilesClone });
+  },
+
   _handleSharedSecretChange(event) {
-    const formData = Object.assign({}, this.state.formData, { sharedSecret: event.target.value });
-    this.setState({ formData });
+    this._updateState({ sharedSecret: event.target.value });
   },
 
   _handleIdentitySecretChange(event) {
-    const formData = Object.assign({}, this.state.formData, { identitySecret: event.target.value });
-    this.setState({ formData });
+    this._updateState({ identitySecret: event.target.value });
   },
 
   _handleTimestampChange(event) {
-    const formData = Object.assign({}, this.state.formData, { timestamp: event.target.value });
-    this.setState({ formData });
+    this._updateState({ timestamp: event.target.value });
   },
 
   _handleTimeOffsetChange(event) {
-    const formData = Object.assign({}, this.state.formData, { timeOffset: event.target.value });
-    this.setState({ formData });
+    this._updateState({ timeOffset: event.target.value });
+  },
+
+  _handleProfileChange(event) {
+    const profileName = event.target.value;
+    const profileIndex = this.state.profiles.map(p => p.name).indexOf(profileName);
+
+    if(profileIndex !== -1) {
+      this.setState({ activeProfile: profileIndex });
+    }
   },
 
   _onCurrentTimestampClick() {
-    const formData = Object.assign({}, this.state.formData, { timestamp: Math.floor(Date.now() / 1000) });
+    const formData = Object.assign({}, this.state.profiles[this.state.activeProfile].formData, { timestamp: Math.floor(Date.now() / 1000) });
     this.setState({ formData });
     this._flashMessage('Set to current unix timestamp.');
   },
 
   _onDynamicTimestampClick() {
-    const formData = Object.assign({}, this.state.formData, { timestamp: '' });
+    const formData = Object.assign({}, this.state.profiles[this.state.activeProfile].formData, { timestamp: '' });
     this.setState({ formData });
     this._flashMessage('Set to dynamic.');
   },
 
   _onSaveClick() {
-    profile.save(this.state.formData);
-    this._flashMessage('Saved.');
+    const profileName = prompt('Please enter configuration name', 'Default');
+
+    if(profileName != null) {
+      const newActiveProfile = profile.save(profileName, this.state.profiles[this.state.activeProfile].formData);
+      console.log(newActiveProfile);
+      this.setState({ activeProfile: newActiveProfile });
+      this._flashMessage('Saved.');
+    } else {
+      this._flashMessage('Missing profile name.');
+    }
+
+    this._loadFromStorage();
+  },
+
+  _onClearCurrentClick() {
+    profile.clear(this.state.activeProfile);
+    this._loadFromStorage();
+    this._flashMessage('Deleted current profile.');
   },
 
   _onClearClick() {
     profile.clear();
-    this._flashMessage('Cleared.');
+    this._loadFromStorage();
+    this._flashMessage('Deleted all profiles.');
   },
 
   _flashMessage(message, timeout = 3000) {
@@ -66,12 +109,16 @@ export default createReactClass({
     return {
       message: null,
 
-      formData: {
-        sharedSecret: '',
-        identitySecret: '',
-        timestamp: '',
-        timeOffset: 0,
-      },
+      profiles: [{
+        name: 'Default',
+        formData: {
+          sharedSecret: '',
+          identitySecret: '',
+          timestamp: '',
+          timeOffset: 0,
+        },
+      }],
+      activeProfile: 0,
 
       generatedValues: {
         authCode: '???',
@@ -85,11 +132,7 @@ export default createReactClass({
   },
 
   componentWillMount() {
-    const formData = profile.load();
-
-    if(formData != null) {
-      this.setState({ formData });
-    }
+    this._loadFromStorage();
   },
 
   componentDidMount() {
@@ -105,6 +148,12 @@ export default createReactClass({
       message = <div className="message">{this.state.message}</div>
     }
 
+    let profiles = (
+      <select id="profile-selector" name="profile-selector" onChange={this._handleProfileChange}>
+        {this.state.profiles.map(p => <option value={p.name} key={p.name}>{p.name}</option>)}
+      </select>
+    );
+
     return (
       <div className="container">
         <h1>Steam Auth Web Util</h1>
@@ -116,21 +165,21 @@ export default createReactClass({
             <label htmlFor="share-secret">Shared secret:</label>
             <input name="shared-secret"
               type="text"
-              value={this.state.formData.sharedSecret}
+              value={this.state.profiles[this.state.activeProfile].formData.sharedSecret}
               onChange={this._handleSharedSecretChange} />
           </div>
           <div className="form-group">
             <label htmlFor="identity-secret">Identity secret:</label>
             <input name="identity-secret"
               type="text"
-              value={this.state.formData.identitySecret}
+              value={this.state.profiles[this.state.activeProfile].formData.identitySecret}
               onChange={this._handleIdentitySecretChange} />
           </div>
           <div className="form-group">
             <label htmlFor="fixed-timestamp" title="Leave empty for live timestamp. Used only for confirmations.">Static timestamp:</label>
             <input name="fixed-timestamp"
               type="text"
-              value={this.state.formData.timestamp}
+              value={this.state.profiles[this.state.activeProfile].formData.timestamp}
               onChange={this._handleTimestampChange} />
             <button onClick={this._onCurrentTimestampClick}>
               Set current
@@ -143,8 +192,12 @@ export default createReactClass({
             <label htmlFor="time-offset">Time offset (seconds):</label>
             <input name="time-offset"
               type="number"
-              value={this.state.formData.timeOffset}
+              value={this.state.profiles[this.state.activeProfile].formData.timeOffset}
               onChange={this._handleTimeOffsetChange} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="profile-selector">Profile:</label>
+            {profiles}
           </div>
           <div className="form-group">
             <input type="button"
@@ -153,8 +206,12 @@ export default createReactClass({
               onClick={this._onSaveClick} />
             <input type="button"
               name="clear"
-              value="Clear local storage"
-              onClick={this._onClearClick} /><br />
+              value="Delete current"
+              onClick={this._onClearCurrentClick} />
+            <input type="button"
+              name="clear"
+              value="Delete all"
+              onClick={this._onClearClick} />
           </div>
         </div>
 
